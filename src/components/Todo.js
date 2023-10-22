@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "./Todo.css";
-import { useState, useRef, useEffect } from "react";
 import { IoMdDoneAll } from "react-icons/io";
 import { FiEdit } from "react-icons/fi";
 import { MdDelete } from "react-icons/md";
@@ -13,27 +12,40 @@ function Todo() {
   const handleSubmit = (e) => {
     e.preventDefault();
   };
+
   const addTodo = () => {
-    if (todo !== "") {
-      setTodos([...todos, { list: todo, id: Date.now(), status: false }]);
-      console.log(todos);
+    const trimmedTodo = todo.trim();
+
+    if (trimmedTodo === "") {
+      return; 
+    }
+
+    if (editId) {
+      const editTodo = todos.find((todo) => todo.id === editId);
+      const updateTodo = todos.map((to) =>
+        to.id === editTodo.id
+          ? { id: to.id, list: trimmedTodo, status: editTodo.status } 
+          : to
+      );
+      setTodos(updateTodo);
+      setEditID(0);
+      setTodo("");
+    } else {
+      if (todos.some((to) => to.list === trimmedTodo)) {
+        alert("This todo already exists.");
+        return;
+      }
+
+      setTodos([...todos, { list: trimmedTodo, id: Date.now(), status: false }]);
       setTodo("");
     }
-    if(editId) {
-        const editTodo = todos.find((todo) => todo.id === editId)
-        const updateTodo = todos.map((to) => to.id === editTodo.id
-        ?(to = {id : to.id, list : todo, status : editTodo.status})
-        : to )
-        setTodos(updateTodo)
-        setEditID(0)
-        setTodo('')
-    }
   };
-  const inputRef = useRef("null");
+
+  const inputRef = useRef(null);
 
   useEffect(() => {
     inputRef.current.focus();
-  });
+  }, []);
 
   const onDelete = (id) => {
     setTodos(todos.filter((to) => to.id !== id));
@@ -54,6 +66,7 @@ function Todo() {
     setTodo(editTodo.list);
     setEditID(editTodo.id);
   };
+
   return (
     <div className="container">
       <h2>TODO APP</h2>
@@ -66,17 +79,14 @@ function Todo() {
           className="form-control"
           onChange={(event) => setTodo(event.target.value)}
         />
-        <button onClick={addTodo}> {editId ? "EDIT" : "ADD"} </button>
+        <button onClick={addTodo}>{editId ? "EDIT" : "ADD"}</button>
       </form>
       <div className="list">
         <ul>
           {todos.map((to) => {
             return (
-              <li className="list-items">
-                <div
-                  className="list-item-list"
-                  id={to.status ? "list-item" : ""}
-                >
+              <li className="list-items" key={to.id}>
+                <div className="list-item-list" id={to.status ? "list-item" : ""}>
                   {to.list}
                 </div>
                 <span>
